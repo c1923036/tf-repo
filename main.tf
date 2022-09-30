@@ -41,7 +41,7 @@ resource "google_compute_instance" "tf-experiment" {
   }
 
   network_interface {
-    subnetwork = google_compute_subnetwork.tf-experiment.self_link
+    network = google_compute_network.tf-experiment.self_link
     #access_config {
     #}
   }
@@ -54,16 +54,22 @@ resource "google_compute_instance" "tf-experiment" {
 #VPC
 resource "google_compute_network" "tf-experiment" {
   name                    = "tf-experiment"
-  auto_create_subnetworks = "false"
+  auto_create_subnetworks = "true"
 }
 
-#Subnet
-resource "google_compute_subnetwork" "tf-experiment" {
-  name          = "tf-experiment"
-  ip_cidr_range = "192.168.0.0/16"
-  network       = google_compute_network.tf-experiment.id
+#Network Peering A
+resource "google_compute_network_peering" "james-saad-vpc---tf-experiment" {
+  name         = "james-saad-vpc---tf-experiment"
+  network      = google_compute_network.tf-experiment.self_link
+  peer_network = data.google_compute_network.tf-course.self_link
 }
 
+#Network Peering B
+resource "google_compute_network_peering" "tf-experiment---james-saad-vpc" {
+  name         = "tf-experiment---james-saad-vpc"
+  network      = data.google_compute_network.tf-course.self_link
+  peer_network = google_compute_network.tf-experiment.self_link
+}
 
 #Security Group
 resource "google_compute_firewall" "tf-experiment" {
@@ -81,6 +87,9 @@ resource "google_compute_firewall" "tf-experiment" {
 # //////////////////////////////
 # DATA
 # //////////////////////////////
+data "google_compute_network" "tf-course" {
+  name = "tf-course"
+}
 
 # //////////////////////////////
 # OUTPUT
